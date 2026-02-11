@@ -739,29 +739,66 @@ def main():
     print("=" * 70)
     print("🔮 ЗАПУСК АСТРОЛОГИЧЕСКОГО БОТА")
     print("=" * 70)
+    
     stats = db.get_all_users_stats()
     print(f"📊 Пользователей: {stats['total_users']}")
     print(f"💎 Премиум: {stats['premium_users']}")
     print(f"💰 Платежей: {stats['total_payments']}")
     print("=" * 70)
+    
     try:
+        # Создаем приложение
         app = Application.builder().token(BOT_TOKEN).build()
+        
+        # Регистрируем обработчики команд
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("help", start))
-        app.add_handler(MessageHandler(filters.Regex(r'^(🔮 Гороскоп|🔢 Нумерология|🃏 Таро|💎 Премиум|⭐ Премиум активен|📊 Статистика|ℹ️ Помощь)$'), handle_main_menu))
-        app.add_handler(MessageHandler(filters.Regex(r'^(♈️ Овен|♉️ Телец|♊️ Близнецы|♋️ Рак|♌️ Лев|♍️ Дева|♎️ Весы|♏️ Скорпион|♐️ Стрелец|♑️ Козерог|♒️ Водолей|♓️ Рыбы|🔙 Назад в меню)$'), handle_zodiac_selection))
-        app.add_handler(MessageHandler(filters.Regex(r'^\d{2}\.\d{2}\.\d{4}$'), handle_numerology_input))
+        
+        # Обработчики главного меню
+        app.add_handler(MessageHandler(
+            filters.Regex(r'^(🔮 Гороскоп|🔢 Нумерология|🃏 Таро|💎 Премиум|⭐ Премиум активен|📊 Статистика|ℹ️ Помощь)$'),
+            handle_main_menu
+        ))
+        
+        # Обработчики знаков зодиака
+        app.add_handler(MessageHandler(
+            filters.Regex(r'^(♈️ Овен|♉️ Телец|♊️ Близнецы|♋️ Рак|♌️ Лев|♍️ Дева|♎️ Весы|♏️ Скорпион|♐️ Стрелец|♑️ Козерог|♒️ Водолей|♓️ Рыбы|🔙 Назад в меню)$'),
+            handle_zodiac_selection
+        ))
+        
+        # Обработчик нумерологии
+        app.add_handler(MessageHandler(
+            filters.Regex(r'^\d{2}\.\d{2}\.\d{4}$'),
+            handle_numerology_input
+        ))
+        
+        # Обработчики callback-запросов
         app.add_handler(CallbackQueryHandler(handle_tarot_callback, pattern="^tarot_"))
         app.add_handler(CallbackQueryHandler(handle_premium_callback, pattern="^premium_"))
         app.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_"))
+        
+        # Обработчики платежей
         app.add_handler(PreCheckoutQueryHandler(pre_checkout_handler))
         app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_handler))
+        
+        # Обработчик любых текстовых сообщений
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_main_menu))
+        
+        # Обработчик ошибок
         app.add_error_handler(error_handler)
+        
         print("✅ Бот запущен и готов к работе!")
         print("📱 Напишите /start в Telegram")
         print("=" * 70)
-        app.run_polling(poll_interval=1, timeout=30, drop_pending_updates=True, allowed_updates=Update.ALL_TYPES)
+        print("⚡ ОЖИДАНИЕ СООБЩЕНИЙ...")
+        print("=" * 70)
+        
+        # Запускаем бота (БЕЗ poll_interval и timeout!)
+        app.run_polling(
+            drop_pending_updates=True,
+            allowed_updates=Update.ALL_TYPES
+        )
+        
     except KeyboardInterrupt:
         print("\n👋 Бот остановлен пользователем")
     except Exception as e:
