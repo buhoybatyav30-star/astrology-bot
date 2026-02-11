@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔮 АСТРОЛОГИЧЕСКИЙ БОТ - УЛУЧШЕННАЯ ВЕРСИЯ
-✅ Безопасная загрузка токенов из .env
-✅ Премиум-гороскопы из внешней базы (365 дней × 12 знаков)
-✅ Бесплатные гороскопы — короткие, премиум — развернутые
-✅ Потокобезопасная БД с блокировкой
-✅ Исправлены все ошибки (включая get_all_users_stats)
+🔮 АСТРОЛОГИЧЕСКИЙ БОТ - РАБОЧАЯ ВЕРСИЯ ДЛЯ PYTHON-TELEGRAM-BOT 20.7
+✅ Полностью совместим с версией 20.7
+✅ Без ошибок Updater
+✅ Готов к работе на Render
 """
 
 import logging
@@ -63,7 +61,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 print("=" * 70)
-print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ - УЛУЧШЕННАЯ ВЕРСИЯ")
+print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ - ВЕРСИЯ 20.7")
 print(f"✅ Токен бота загружен: {BOT_TOKEN[:10]}...")
 print(f"✅ Платежный токен загружен: {PAYMENT_PROVIDER_TOKEN[:20]}...")
 print("=" * 70)
@@ -747,57 +745,27 @@ def main():
     print("=" * 70)
     
     try:
-        # Создаем приложение
         app = Application.builder().token(BOT_TOKEN).build()
         
-        # Регистрируем обработчики команд
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("help", start))
-        
-        # Обработчики главного меню
-        app.add_handler(MessageHandler(
-            filters.Regex(r'^(🔮 Гороскоп|🔢 Нумерология|🃏 Таро|💎 Премиум|⭐ Премиум активен|📊 Статистика|ℹ️ Помощь)$'),
-            handle_main_menu
-        ))
-        
-        # Обработчики знаков зодиака
-        app.add_handler(MessageHandler(
-            filters.Regex(r'^(♈️ Овен|♉️ Телец|♊️ Близнецы|♋️ Рак|♌️ Лев|♍️ Дева|♎️ Весы|♏️ Скорпион|♐️ Стрелец|♑️ Козерог|♒️ Водолей|♓️ Рыбы|🔙 Назад в меню)$'),
-            handle_zodiac_selection
-        ))
-        
-        # Обработчик нумерологии
-        app.add_handler(MessageHandler(
-            filters.Regex(r'^\d{2}\.\d{2}\.\d{4}$'),
-            handle_numerology_input
-        ))
-        
-        # Обработчики callback-запросов
+        app.add_handler(MessageHandler(filters.Regex(r'^(🔮 Гороскоп|🔢 Нумерология|🃏 Таро|💎 Премиум|⭐ Премиум активен|📊 Статистика|ℹ️ Помощь)$'), handle_main_menu))
+        app.add_handler(MessageHandler(filters.Regex(r'^(♈️ Овен|♉️ Телец|♊️ Близнецы|♋️ Рак|♌️ Лев|♍️ Дева|♎️ Весы|♏️ Скорпион|♐️ Стрелец|♑️ Козерог|♒️ Водолей|♓️ Рыбы|🔙 Назад в меню)$'), handle_zodiac_selection))
+        app.add_handler(MessageHandler(filters.Regex(r'^\d{2}\.\d{2}\.\d{4}$'), handle_numerology_input))
         app.add_handler(CallbackQueryHandler(handle_tarot_callback, pattern="^tarot_"))
         app.add_handler(CallbackQueryHandler(handle_premium_callback, pattern="^premium_"))
         app.add_handler(CallbackQueryHandler(handle_back_callback, pattern="^back_"))
-        
-        # Обработчики платежей
         app.add_handler(PreCheckoutQueryHandler(pre_checkout_handler))
         app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_handler))
-        
-        # Обработчик любых текстовых сообщений
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_main_menu))
-        
-        # Обработчик ошибок
         app.add_error_handler(error_handler)
         
         print("✅ Бот запущен и готов к работе!")
         print("📱 Напишите /start в Telegram")
         print("=" * 70)
-        print("⚡ ОЖИДАНИЕ СООБЩЕНИЙ...")
-        print("=" * 70)
         
-        # Запускаем бота (БЕЗ poll_interval и timeout!)
-        app.run_polling(
-            drop_pending_updates=True,
-            allowed_updates=Update.ALL_TYPES
-        )
+        # ЗАПУСК БЕЗ ОШИБОК (только необходимые параметры)
+        app.run_polling(drop_pending_updates=True)
         
     except KeyboardInterrupt:
         print("\n👋 Бот остановлен пользователем")
