@@ -111,6 +111,49 @@ class UserDatabase:
     # [Полная реализация методов из предыдущего кода: add_user, get_user, update_counter, 
     #  add_premium, is_premium, save_payment, update_payment_status, update_user_birth_date, get_all_users_stats]
 
+def get_all_users_stats(self):
+    """Получение статистики по всем пользователям"""
+    try:
+        total_users = len(self.data.get('users', {}))
+        premium_users = len(self.data.get('premium', {}))
+        total_payments = len(self.data.get('payments', {}))
+        
+        successful_payments = 0
+        total_revenue = 0
+        for payment in self.data.get('payments', {}).values():
+            if payment.get('status') == 'succeeded':
+                successful_payments += 1
+                total_revenue += float(payment.get('amount', 0))
+        
+        total_horoscopes = sum(u.get('horoscope_count', 0) for u in self.data.get('users', {}).values())
+        total_numerology = sum(u.get('num_count', 0) for u in self.data.get('users', {}).values())
+        total_tarot = sum(u.get('tarot_count', 0) for u in self.data.get('users', {}).values())
+        total_compatibility = sum(u.get('compatibility_count', 0) for u in self.data.get('users', {}).values())
+        
+        return {
+            'total_users': total_users,
+            'premium_users': premium_users,
+            'total_payments': total_payments,
+            'successful_payments': successful_payments,
+            'total_horoscopes': total_horoscopes,
+            'total_numerology': total_numerology,
+            'total_tarot': total_tarot,
+            'total_compatibility': total_compatibility,
+            'total_revenue': total_revenue
+        }
+    except Exception as e:
+        logger.error(f"❌ Ошибка получения статистики: {e}")
+        return {
+            'total_users': 0,
+            'premium_users': 0,
+            'total_payments': 0,
+            'successful_payments': 0,
+            'total_horoscopes': 0,
+            'total_numerology': 0,
+            'total_tarot': 0,
+            'total_compatibility': 0,
+            'total_revenue': 0
+        }
 # Инициализация БД
 db = UserDatabase()
 
