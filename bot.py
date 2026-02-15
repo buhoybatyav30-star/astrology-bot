@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔮 АСТРОЛОГИЧЕСКИЙ БОТ - ВЕРСИЯ С АДМИНКОЙ
-✅ Полностью рабочая версия для Render
-✅ Админ-панель с рассылкой и тех. работами  
-✅ Ручное управление премиумом
-✅ Безопасность через ADMIN_USER_ID
+🔮 АСТРОЛОГИЧЕСКИЙ БОТ - РАБОЧАЯ ВЕРСИЯ ДЛЯ RENDER
+✅ Без синтаксических ошибок
+✅ Админка по /admin
+✅ Автоматический премиум
+✅ Технические работы
+✅ Проверено на Render
 """
 
 import logging
@@ -49,7 +50,7 @@ if not PAYMENT_PROVIDER_TOKEN:
 
 # ====== КОНФИГУРАЦИЯ АДМИНА ======
 ADMIN_USER_ID = 6198172981  # Ваш ID из логов
-TECHNICAL_WORKS = False  # Флаг технических работ
+TECHNICAL_WORKS = False
 
 # Создаем папки
 os.makedirs('data', exist_ok=True)
@@ -66,7 +67,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 print("=" * 70)
-print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ - ВЕРСИЯ С АДМИНКОЙ")
+print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ - РАБОЧАЯ ВЕРСИЯ")
 print(f"✅ Токен бота загружен: {BOT_TOKEN[:10]}...")
 print(f"✅ Платежный токен загружен: {PAYMENT_PROVIDER_TOKEN[:20]}...")
 print(f"👑 Админ ID: {ADMIN_USER_ID}")
@@ -97,7 +98,7 @@ class UserDatabase:
                 with open(self.filename, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     for key in ['users', 'premium', 'payments', 'stats']:
-                        if key not in 
+                        if key not in data:
                             data[key] = {}
                     return data
             except Exception as e:
@@ -180,7 +181,6 @@ class UserDatabase:
         return False
     
     def remove_premium(self, user_id):
-        """Удалить премиум у пользователя"""
         user_id_str = str(user_id)
         if user_id_str in self.data['premium']:
             del self.data['premium'][user_id_str]
@@ -191,7 +191,7 @@ class UserDatabase:
     
     def save_payment(self, payment_id, user_id, tariff_days, amount, status='pending'):
         try:
-            if 'payments' not in self.
+            if 'payments' not in self.data:
                 self.data['payments'] = {}
             payment_record = {
                 'user_id': str(user_id),
@@ -224,7 +224,6 @@ class UserDatabase:
             self.save_data()
     
     def get_all_users_stats(self):
-        """Получение статистики по всем пользователям"""
         try:
             total_users = len(self.data.get('users', {}))
             premium_users = len(self.data.get('premium', {}))
@@ -308,7 +307,6 @@ def get_current_date_string():
     return f"{now.day} {months[now.month]} {now.year} года ({weekday})"
 
 def generate_basic_horoscope(zodiac_sign, user_id=None):
-    """Базовый гороскоп для бесплатных пользователей (короткий)"""
     today = datetime.now().strftime("%Y-%m-%d")
     seed_string = f"{today}_{user_id}_{zodiac_sign}" if user_id else f"{today}_{zodiac_sign}"
     seed_hash = hashlib.md5(seed_string.encode()).hexdigest()
@@ -341,7 +339,6 @@ def generate_basic_horoscope(zodiac_sign, user_id=None):
     return horoscope
 
 def generate_premium_horoscope(zodiac_sign, user_id=None):
-    """Премиум гороскоп из базы (полный, разнообразный)"""
     today = datetime.now().strftime("%Y-%m-%d")
     
     if today in PREMIUM_HOROSCOPES and zodiac_sign in PREMIUM_HOROSCOPES[today]:
@@ -546,25 +543,27 @@ async def handle_numerology_input(update: Update, context: ContextTypes.DEFAULT_
         life_path = sum(int(d) for d in str(day + month + year))
         while life_path > 9:
             life_path = sum(int(d) for d in str(life_path))
+        personalities = [
+            "**ЛИДЕР И НОВАТОР** 💪\nВы рождены, чтобы вести за собой.",
+            "**ДИПЛОМАТ И МИРОТВОРЕЦ** 🤝\nВаш дар - находить гармонию.",
+            "**ТВОРЕЦ И ОПТИМИСТ** 🎨\nВы приносите в мир красоту и радость.",
+            "**СТРОИТЕЛЬ И ПРАКТИК** 🏗️\nВы создаёте прочный фундамент.",
+            "**ИССЛЕДОВАТЕЛЬ И АВАНТЮРИСТ** 🌍\nВаша стихия - свобода и движение."
+        ]
+        advice_options = [
+            "Доверяйте своему внутреннему голосу.",
+            "Используйте свои сильные стороны для достижения целей.",
+            "Работайте над своими слабостями, превращая их в возможности."
+        ]
         numerology_result = f"""🔢 *НУМЕРОЛОГИЧЕСКИЙ ПОРТРЕТ*
 
 *Дата рождения:* {text}
 *Число жизненного пути:* {life_path}
 
-{random.choice([
-    f'**ЛИДЕР И НОВАТОР** 💪\nВы рождены, чтобы вести за собой.',
-    f'**ДИПЛОМАТ И МИРОТВОРЕЦ** 🤝\nВаш дар - находить гармонию.',
-    f'**ТВОРЕЦ И ОПТИМИСТ** 🎨\nВы приносите в мир красоту и радость.',
-    f'**СТРОИТЕЛЬ И ПРАКТИК** 🏗️\nВы создаёте прочный фундамент.',
-    f'**ИССЛЕДОВАТЕЛЬ И АВАНТЮРИСТ** 🌍\nВаша стихия - свобода и движение.'
-])}
+{random.choice(personalities)}
 
 *💫 Совет:*
-{random.choice([
-    "Доверяйте своему внутреннему голосу.",
-    "Используйте свои сильные стороны для достижения целей.",
-    "Работайте над своими слабостями, превращая их в возможности."
-])}"""
+{random.choice(advice_options)}"""
         await update.message.reply_text(numerology_result, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Неверный формат даты!*\n\nИспользуй: `ДД.ММ.ГГГГ`\n*Пример:* `23.09.1992`", parse_mode='Markdown')
@@ -750,7 +749,6 @@ async def handle_back_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 
 # ====== АДМИНСКИЕ ФУНКЦИИ ======
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Админ-панель"""
     user_id = update.effective_user.id
     
     if user_id != ADMIN_USER_ID:
@@ -791,7 +789,6 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка кнопок админки"""
     query = update.callback_query
     await query.answer()
     
@@ -834,7 +831,6 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         )
 
 async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка текстовых команд админа"""
     if update.effective_user.id != ADMIN_USER_ID:
         return
         
@@ -873,14 +869,13 @@ async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TY
     elif text == '/premium_list':
         premium_users = list(db.data.get('premium', {}).keys())
         if premium_users:
-            users_list = "\n".join([f"• {uid}" for uid in premium_users[:20]])  # Первые 20
+            users_list = "\n".join([f"• {uid}" for uid in premium_users[:20]])
             await update.message.reply_text(f"👑 *ПРЕМИУМ ПОЛЬЗОВАТЕЛИ* ({len(premium_users)}):\n\n{users_list}", parse_mode='Markdown')
         else:
             await update.message.reply_text("👑 Нет премиум пользователей")
             
     elif text.startswith('/send'):
-        # Обработка рассылки через команду
-        broadcast_text = text[5:].strip()  # Убираем "/send "
+        broadcast_text = text[5:].strip()
         if broadcast_text:
             users = list(db.data['users'].keys())
             success_count = 0
@@ -899,7 +894,6 @@ async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TY
             await update.message.reply_text("❌ Пустой текст рассылки")
 
 async def handle_broadcast_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработка текста рассылки"""
     if update.effective_user.id != ADMIN_USER_ID:
         return
         
