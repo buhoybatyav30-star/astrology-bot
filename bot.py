@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔮 АСТРОЛОГИЧЕСКИЙ БОТ - ГАРАНТИРОВАННО РАБОЧАЯ ВЕРСИЯ
-✅ Проверено на Python 3.11.11 + python-telegram-bot==20.7
-✅ Без синтаксических ошибок
-✅ Без Updater
-✅ Готов к работе на Render
+🔮 АСТРОЛОГИЧЕСКИЙ БОТ - ВЕРСИЯ С АДМИНКОЙ
+✅ Полностью рабочая версия для Render
+✅ Админ-панель с рассылкой и тех. работами  
+✅ Ручное управление премиумом
+✅ Безопасность через ADMIN_USER_ID
 """
 
 import logging
@@ -47,6 +47,10 @@ if not BOT_TOKEN:
 if not PAYMENT_PROVIDER_TOKEN:
     raise ValueError("❌ ОШИБКА: Не задан PAYMENT_PROVIDER_TOKEN в .env файле!")
 
+# ====== КОНФИГУРАЦИЯ АДМИНА ======
+ADMIN_USER_ID = 6198172981  # Ваш ID из логов
+TECHNICAL_WORKS = False  # Флаг технических работ
+
 # Создаем папки
 os.makedirs('data', exist_ok=True)
 
@@ -62,9 +66,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 print("=" * 70)
-print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ - ГАРАНТИРОВАННО РАБОЧАЯ ВЕРСИЯ")
+print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ - ВЕРСИЯ С АДМИНКОЙ")
 print(f"✅ Токен бота загружен: {BOT_TOKEN[:10]}...")
 print(f"✅ Платежный токен загружен: {PAYMENT_PROVIDER_TOKEN[:20]}...")
+print(f"👑 Админ ID: {ADMIN_USER_ID}")
 print("=" * 70)
 
 # ====== ЗАГРУЗКА БАЗЫ ПРЕМИУМ ГОРОСКОПОВ ======
@@ -92,7 +97,7 @@ class UserDatabase:
                 with open(self.filename, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     for key in ['users', 'premium', 'payments', 'stats']:
-                        if key not in data:
+                        if key not in 
                             data[key] = {}
                     return data
             except Exception as e:
@@ -174,9 +179,19 @@ class UserDatabase:
                 return False
         return False
     
+    def remove_premium(self, user_id):
+        """Удалить премиум у пользователя"""
+        user_id_str = str(user_id)
+        if user_id_str in self.data['premium']:
+            del self.data['premium'][user_id_str]
+            self.save_data()
+            logger.info(f"❌ Премиум удалён для {user_id}")
+            return True
+        return False
+    
     def save_payment(self, payment_id, user_id, tariff_days, amount, status='pending'):
         try:
-            if 'payments' not in self.data:
+            if 'payments' not in self.
                 self.data['payments'] = {}
             payment_record = {
                 'user_id': str(user_id),
@@ -359,6 +374,15 @@ def generate_premium_horoscope(zodiac_sign, user_id=None):
 
 # ====== ОСНОВНЫЕ ОБРАБОТЧИКИ ======
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global TECHNICAL_WORKS
+    
+    if TECHNICAL_WORKS:
+        await update.message.reply_text(
+            "🔧 *Ведутся технические работы*\n\nБот временно недоступен. Пожалуйста, попробуйте позже.",
+            parse_mode='Markdown'
+        )
+        return
+    
     user = update.effective_user
     user_id = user.id
     try:
@@ -383,6 +407,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Привет! Добро пожаловать в астрологический бот! 🔮", reply_markup=get_main_keyboard())
 
 async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global TECHNICAL_WORKS
+    
+    if TECHNICAL_WORKS:
+        await update.message.reply_text(
+            "🔧 *Ведутся технические работы*\n\nБот временно недоступен. Пожалуйста, попробуйте позже.",
+            parse_mode='Markdown'
+        )
+        return
+        
     user_id = update.effective_user.id
     text = update.message.text
     try:
@@ -457,6 +490,15 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Произошла ошибка. Попробуйте еще раз.", reply_markup=get_main_keyboard(user_id))
 
 async def handle_zodiac_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global TECHNICAL_WORKS
+    
+    if TECHNICAL_WORKS:
+        await update.message.reply_text(
+            "🔧 *Ведутся технические работы*\n\nБот временно недоступен. Пожалуйста, попробуйте позже.",
+            parse_mode='Markdown'
+        )
+        return
+        
     user_id = update.effective_user.id
     text = update.message.text
     if text == "🔙 Назад в меню":
@@ -485,6 +527,15 @@ async def handle_zodiac_selection(update: Update, context: ContextTypes.DEFAULT_
         await update.message.reply_text("🔮 Выбери знак зодиака из меню!", reply_markup=get_zodiac_keyboard())
 
 async def handle_numerology_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global TECHNICAL_WORKS
+    
+    if TECHNICAL_WORKS:
+        await update.message.reply_text(
+            "🔧 *Ведутся технические работы*\n\nБот временно недоступен. Пожалуйста, попробуйте позже.",
+            parse_mode='Markdown'
+        )
+        return
+        
     user_id = update.effective_user.id
     text = update.message.text
     try:
@@ -492,37 +543,29 @@ async def handle_numerology_input(update: Update, context: ContextTypes.DEFAULT_
         day, month, year = date_obj.day, date_obj.month, date_obj.year
         db.update_counter(user_id, 'num_count')
         await update.message.reply_text("🔢 *Анализирую ваши числа...* ✨", parse_mode='Markdown')
-        
         life_path = sum(int(d) for d in str(day + month + year))
         while life_path > 9:
             life_path = sum(int(d) for d in str(life_path))
-        
-        personalities = [
-            "**ЛИДЕР И НОВАТОР** 💪\nВы рождены, чтобы вести за собой.",
-            "**ДИПЛОМАТ И МИРОТВОРЕЦ** 🤝\nВаш дар - находить гармонию.",
-            "**ТВОРЕЦ И ОПТИМИСТ** 🎨\nВы приносите в мир красоту и радость.",
-            "**СТРОИТЕЛЬ И ПРАКТИК** 🏗️\nВы создаёте прочный фундамент.",
-            "**ИССЛЕДОВАТЕЛЬ И АВАНТЮРИСТ** 🌍\nВаша стихия - свобода и движение."
-        ]
-        
-        advice_options = [
-            "Доверяйте своему внутреннему голосу.",
-            "Используйте свои сильные стороны для достижения целей.",
-            "Работайте над своими слабостями, превращая их в возможности."
-        ]
-        
         numerology_result = f"""🔢 *НУМЕРОЛОГИЧЕСКИЙ ПОРТРЕТ*
 
 *Дата рождения:* {text}
 *Число жизненного пути:* {life_path}
 
-{random.choice(personalities)}
+{random.choice([
+    f'**ЛИДЕР И НОВАТОР** 💪\nВы рождены, чтобы вести за собой.',
+    f'**ДИПЛОМАТ И МИРОТВОРЕЦ** 🤝\nВаш дар - находить гармонию.',
+    f'**ТВОРЕЦ И ОПТИМИСТ** 🎨\nВы приносите в мир красоту и радость.',
+    f'**СТРОИТЕЛЬ И ПРАКТИК** 🏗️\nВы создаёте прочный фундамент.',
+    f'**ИССЛЕДОВАТЕЛЬ И АВАНТЮРИСТ** 🌍\nВаша стихия - свобода и движение.'
+])}
 
 *💫 Совет:*
-{random.choice(advice_options)}"""
-        
+{random.choice([
+    "Доверяйте своему внутреннему голосу.",
+    "Используйте свои сильные стороны для достижения целей.",
+    "Работайте над своими слабостями, превращая их в возможности."
+])}"""
         await update.message.reply_text(numerology_result, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
-        
     except ValueError:
         await update.message.reply_text("❌ *Неверный формат даты!*\n\nИспользуй: `ДД.ММ.ГГГГ`\n*Пример:* `23.09.1992`", parse_mode='Markdown')
     except Exception as e:
@@ -530,6 +573,12 @@ async def handle_numerology_input(update: Update, context: ContextTypes.DEFAULT_
         await update.message.reply_text("Произошла ошибка. Попробуйте еще раз.", reply_markup=get_main_keyboard(user_id))
 
 async def handle_tarot_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global TECHNICAL_WORKS
+    
+    if TECHNICAL_WORKS:
+        await update.callback_query.answer("🔧 Технические работы", show_alert=True)
+        return
+        
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
@@ -610,6 +659,12 @@ async def handle_tarot_three(update: Update, context: ContextTypes.DEFAULT_TYPE,
     await query.message.reply_text(tarot_text, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
 
 async def handle_premium_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global TECHNICAL_WORKS
+    
+    if TECHNICAL_WORKS:
+        await update.callback_query.answer("🔧 Технические работы", show_alert=True)
+        return
+        
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
@@ -693,6 +748,183 @@ async def handle_back_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         except Exception as e2:
             logger.error(f"❌ Ошибка возврата: {e2}")
 
+# ====== АДМИНСКИЕ ФУНКЦИИ ======
+async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Админ-панель"""
+    user_id = update.effective_user.id
+    
+    if user_id != ADMIN_USER_ID:
+        await update.message.reply_text("❌ Доступ запрещен")
+        return
+    
+    stats = db.get_all_users_stats()
+    
+    admin_text = f"""🛠️ *АДМИН-ПАНЕЛЬ*
+
+*Статистика:*
+👥 Пользователей: {stats['total_users']}
+💎 Премиум: {stats['premium_users']}
+💰 Платежей: {stats['total_payments']}
+✅ Успешных: {stats['successful_payments']}
+
+*Технические работы:*
+{'🔴 ВКЛЮЧЕНЫ' if TECHNICAL_WORKS else '🟢 ВЫКЛЮЧЕНЫ'}
+
+*Команды:*
+/send <текст> - рассылка всем
+/tech_on - включить тех. работы  
+/tech_off - выключить тех. работы
+/stats - обновить статистику"""
+
+    keyboard = [
+        [InlineKeyboardButton("📤 Рассылка", callback_data="admin_broadcast")],
+        [InlineKeyboardButton("🔧 Тех. работы: ВКЛ", callback_data="admin_tech_on")],
+        [InlineKeyboardButton("✅ Тех. работы: ВЫКЛ", callback_data="admin_tech_off")],
+        [InlineKeyboardButton("📊 Статистика", callback_data="admin_stats")],
+        [InlineKeyboardButton("👑 Управление премиумом", callback_data="admin_premium")]
+    ]
+    
+    await update.message.reply_text(
+        admin_text,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode='Markdown'
+    )
+
+async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка кнопок админки"""
+    query = update.callback_query
+    await query.answer()
+    
+    if query.from_user.id != ADMIN_USER_ID:
+        await query.message.reply_text("❌ Доступ запрещен")
+        return
+    
+    global TECHNICAL_WORKS
+    
+    if query.data == "admin_broadcast":
+        context.user_data['awaiting_broadcast'] = True
+        await query.message.reply_text("📤 Отправьте текст для рассылки:")
+        
+    elif query.data == "admin_tech_on":
+        TECHNICAL_WORKS = True
+        await query.message.edit_text("🔴 Технические работы ВКЛЮЧЕНЫ")
+        
+    elif query.data == "admin_tech_off":
+        TECHNICAL_WORKS = False
+        await query.message.edit_text("🟢 Технические работы ВЫКЛЮЧЕНЫ")
+        
+    elif query.data == "admin_stats":
+        stats = db.get_all_users_stats()
+        stats_text = f"""📊 *ОБНОВЛЁННАЯ СТАТИСТИКА*
+
+👥 Пользователей: {stats['total_users']}
+💎 Премиум: {stats['premium_users']}
+💰 Платежей: {stats['total_payments']}
+✅ Успешных: {stats['successful_payments']}"""
+        await query.message.reply_text(stats_text, parse_mode='Markdown')
+        
+    elif query.data == "admin_premium":
+        await query.message.reply_text(
+            "👑 *УПРАВЛЕНИЕ ПРЕМИУМОМ*\n\n"
+            "Отправьте команду в формате:\n"
+            "`/premium_add <user_id> <days>` - добавить премиум\n"
+            "`/premium_remove <user_id>` - удалить премиум\n"
+            "`/premium_list` - список премиум пользователей",
+            parse_mode='Markdown'
+        )
+
+async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка текстовых команд админа"""
+    if update.effective_user.id != ADMIN_USER_ID:
+        return
+        
+    text = update.message.text.strip()
+    
+    if text.startswith('/premium_add'):
+        parts = text.split()
+        if len(parts) == 3:
+            try:
+                user_id = int(parts[1])
+                days = int(parts[2])
+                premium_until = db.add_premium(user_id, days)
+                await update.message.reply_text(
+                    f"✅ Премиум добавлен пользователю {user_id} на {days} дней\n"
+                    f"До: {premium_until}"
+                )
+            except ValueError:
+                await update.message.reply_text("❌ Неверный формат. Используйте: `/premium_add <user_id> <days>`")
+        else:
+            await update.message.reply_text("❌ Неверное количество параметров")
+            
+    elif text.startswith('/premium_remove'):
+        parts = text.split()
+        if len(parts) == 2:
+            try:
+                user_id = int(parts[1])
+                if db.remove_premium(user_id):
+                    await update.message.reply_text(f"✅ Премиум удалён у пользователя {user_id}")
+                else:
+                    await update.message.reply_text(f"❌ У пользователя {user_id} нет премиума")
+            except ValueError:
+                await update.message.reply_text("❌ Неверный формат. Используйте: `/premium_remove <user_id>`")
+        else:
+            await update.message.reply_text("❌ Неверное количество параметров")
+            
+    elif text == '/premium_list':
+        premium_users = list(db.data.get('premium', {}).keys())
+        if premium_users:
+            users_list = "\n".join([f"• {uid}" for uid in premium_users[:20]])  # Первые 20
+            await update.message.reply_text(f"👑 *ПРЕМИУМ ПОЛЬЗОВАТЕЛИ* ({len(premium_users)}):\n\n{users_list}", parse_mode='Markdown')
+        else:
+            await update.message.reply_text("👑 Нет премиум пользователей")
+            
+    elif text.startswith('/send'):
+        # Обработка рассылки через команду
+        broadcast_text = text[5:].strip()  # Убираем "/send "
+        if broadcast_text:
+            users = list(db.data['users'].keys())
+            success_count = 0
+            for user_id in users:
+                try:
+                    await context.bot.send_message(
+                        chat_id=int(user_id),
+                        text=f"📢 *РАССЫЛКА*\n\n{broadcast_text}",
+                        parse_mode='Markdown'
+                    )
+                    success_count += 1
+                except Exception as e:
+                    logger.warning(f"Не удалось отправить рассылку {user_id}: {e}")
+            await update.message.reply_text(f"✅ Рассылка отправлена {success_count} из {len(users)} пользователей")
+        else:
+            await update.message.reply_text("❌ Пустой текст рассылки")
+
+async def handle_broadcast_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработка текста рассылки"""
+    if update.effective_user.id != ADMIN_USER_ID:
+        return
+        
+    if context.user_data.get('awaiting_broadcast'):
+        broadcast_text = update.message.text
+        context.user_data['awaiting_broadcast'] = False
+        
+        users = list(db.data['users'].keys())
+        success_count = 0
+        
+        for user_id in users:
+            try:
+                await context.bot.send_message(
+                    chat_id=int(user_id),
+                    text=f"📢 *РАССЫЛКА*\n\n{broadcast_text}",
+                    parse_mode='Markdown'
+                )
+                success_count += 1
+            except Exception as e:
+                logger.warning(f"Не удалось отправить рассылку {user_id}: {e}")
+        
+        await update.message.reply_text(
+            f"✅ Рассылка отправлена {success_count} из {len(users)} пользователей"
+        )
+
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     error = context.error
     if error:
@@ -756,6 +988,7 @@ def main():
     try:
         app = Application.builder().token(BOT_TOKEN).build()
         
+        # Основные обработчики
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("help", start))
         app.add_handler(MessageHandler(filters.Regex(r'^(🔮 Гороскоп|🔢 Нумерология|🃏 Таро|💎 Премиум|⭐ Премиум активен|📊 Статистика|ℹ️ Помощь)$'), handle_main_menu))
@@ -767,10 +1000,19 @@ def main():
         app.add_handler(PreCheckoutQueryHandler(pre_checkout_handler))
         app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_handler))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_main_menu))
+        
+        # Админские обработчики
+        app.add_handler(CommandHandler("admin", admin_panel))
+        app.add_handler(MessageHandler(filters.TEXT & filters.User(ADMIN_USER_ID), handle_admin_commands))
+        app.add_handler(MessageHandler(filters.TEXT & filters.User(ADMIN_USER_ID), handle_broadcast_text))
+        app.add_handler(CallbackQueryHandler(handle_admin_callback, pattern="^admin_"))
+        
+        # Обработчик ошибок
         app.add_error_handler(error_handler)
         
         print("✅ Бот запущен и готов к работе!")
         print("📱 Напишите /start в Telegram")
+        print("👑 Админ-команда: /admin")
         print("=" * 70)
         
         app.run_polling(drop_pending_updates=True)
