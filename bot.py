@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔮 АСТРОЛОГИЧЕСКИЙ БОТ - РАБОЧАЯ ВЕРСИЯ ДЛЯ RENDER
-✅ Без синтаксических ошибок
-✅ Админка по /admin
+🔮 АСТРОЛОГИЧЕСКИЙ БОТ — РАБОЧАЯ ВЕРСИЯ ДЛЯ RENDER (с HTTP-сервером)
+✅ Без ошибок деплоя
 ✅ Автоматический премиум
+✅ Админка (/admin)
 ✅ Технические работы
-✅ Проверено на Render
+✅ Работает на Free + готов к Always On
 """
 
 import logging
@@ -17,7 +17,8 @@ import hashlib
 import uuid
 import asyncio
 from datetime import datetime, timedelta
-from threading import Lock
+from threading import Thread, Lock
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from dotenv import load_dotenv
 
 from telegram import (
@@ -67,7 +68,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 print("=" * 70)
-print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ - РАБОЧАЯ ВЕРСИЯ")
+print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ — ВЕРСИЯ С HTTP-СЕРВЕРОМ")
 print(f"✅ Токен бота загружен: {BOT_TOKEN[:10]}...")
 print(f"✅ Платежный токен загружен: {PAYMENT_PROVIDER_TOKEN[:20]}...")
 print(f"👑 Админ ID: {ADMIN_USER_ID}")
@@ -368,6 +369,29 @@ def generate_premium_horoscope(zodiac_sign, user_id=None):
         'Отличное время для творческих проектов и самовыражения.'
     ])
 )
+
+# ====== HTTP-СЕРВЕР ДЛЯ RENDER (обязательно!) ======
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/health":
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"OK")
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def start_health_server():
+    """Запускает HTTP-сервер на PORT=10000 для Render"""
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    logger.info(f"🌐 HTTP-сервер запущен на порту {port}")
+    server.serve_forever()
+
+# Запускаем сервер в отдельном потоке (не блокирует бота)
+health_thread = Thread(target=start_health_server, daemon=True)
+health_thread.start()
 
 # ====== ОСНОВНЫЕ ОБРАБОТЧИКИ ======
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
