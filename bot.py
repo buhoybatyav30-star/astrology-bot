@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-🔮 АСТРОЛОГИЧЕСКИЙ БОТ — УНИКАЛЬНАЯ ГЕНЕРАЦИЯ ГОРОСКОПОВ
-✅ Уникальные гороскопы каждый день (как premium)
+🔮 АСТРОЛОГИЧЕСКИЙ БОТ — ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
+✅ Уникальные гороскопы каждый день
 ✅ HTTP-сервер для Render
 ✅ Админка (/admin)
 ✅ Автоматический премиум
+✅ Без ошибок синтаксиса
 """
 
 import logging
@@ -67,7 +68,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 print("=" * 70)
-print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ — УНИКАЛЬНАЯ ГЕНЕРАЦИЯ")
+print("🔮 АСТРОЛОГИЧЕСКИЙ БОТ — ИСПРАВЛЕННАЯ ВЕРСИЯ")
 print(f"✅ Токен бота загружен: {BOT_TOKEN[:10]}...")
 print(f"✅ Платежный токен загружен: {PAYMENT_PROVIDER_TOKEN[:20]}...")
 print(f"👑 Админ ID: {ADMIN_USER_ID}")
@@ -310,11 +311,11 @@ def generate_basic_horoscope(zodiac_sign, user_id=None):
     """
     Базовый гороскоп — УНИКАЛЬНЫЙ КАЖДЫЙ ДЕНЬ
     Использует MD5 hash от даты + знака для генерации уникального контента
+    БЕЗ f-строк с эмодзи внутри выражений
     """
     today = datetime.now().strftime("%Y-%m-%d")
     
     # Создаем уникальный seed на основе ТОЛЬКО даты и знака
-    # Это гарантирует, что каждый день будет УНИКАЛЬНЫЙ гороскоп
     seed_input = f"{today}_{zodiac_sign}"
     seed_hash = hashlib.md5(seed_input.encode()).hexdigest()
     seed_number = int(seed_hash[:8], 16)
@@ -324,7 +325,7 @@ def generate_basic_horoscope(zodiac_sign, user_id=None):
     
     date_str = get_current_date_string()
     
-    # Создаем БОЛЬШЕ вариаций для уникальности
+    # Списки вариантов — БЕЗ эмодзи в f-строках
     energy_texts = [
         "День благоприятствует новым начинаниям. Действуйте смело!",
         "Энергия дня способствует гармонии и внутреннему покою.",
@@ -372,23 +373,16 @@ def generate_basic_horoscope(zodiac_sign, user_id=None):
         "Не бойтесь перемен"
     ]
     
-    # Генерируем гороскоп с БОЛЬШИМ разнообразием
-    horoscope = f"""✨ *Гороскоп для {zodiac_sign}* ✨
-*На {date_str}*
-
-{random.choice(energy_texts)}
-
-💖 *Любовь:* {random.choice(love_texts)}
-
-💼 *Карьера:* {random.choice(career_texts)}
-
-🌿 *Здоровье:* {random.choice(health_texts)}
-
-💫 *Совет:* {random.choice(advice_texts)}
-
-#{zodiac_sign.split()[-1]} #Астрология #Гороскоп"""
+    # Генерируем гороскоп — БЕЗ f-строк с эмодзи внутри
+    intro = "✨ *Гороскоп для " + zodiac_sign + "* ✨\n*На " + date_str + "*\n\n"
+    energy = random.choice(energy_texts) + "\n\n"
+    love = "💖 *Любовь:* " + random.choice(love_texts) + "\n\n"
+    career = "💼 *Карьера:* " + random.choice(career_texts) + "\n\n"
+    health = "🌿 *Здоровье:* " + random.choice(health_texts) + "\n\n"
+    advice = "💫 *Совет:* " + random.choice(advice_texts) + "\n\n"
+    hashtag = "#" + zodiac_sign.split()[-1] + " #Астрология #Гороскоп"
     
-    # ВАЖНО: НЕ сбрасываем seed! Он должен остаться фиксированным на весь день
+    horoscope = intro + energy + love + career + health + advice + hashtag
     
     return horoscope
 
@@ -400,30 +394,34 @@ def generate_premium_horoscope(zodiac_sign, user_id=None):
         return PREMIUM_HOROSCOPES[today][zodiac_sign]
     
     # Если нет в базе — генерируем расширенный
-    return generate_basic_horoscope(zodiac_sign, user_id) + """
+    base = generate_basic_horoscope(zodiac_sign, user_id)
+    
+    premium_addition = """
 
 ✨ *ПРЕМИУМ ДОПОЛНЕНИЕ* ✨
 
 *Астрологические детали:*
-• Луна в знаке: {moon_sign}
-• Благоприятное время: {lucky_time}
+• Луна в знаке: {moon}
+• Благоприятное время: {time}
 • Камень-талисман: {stone}
 • Цвет удачи: {color}
 
 *Недельный прогноз:*
-{weekly_forecast}
+{weekly}
 
 #Премиум""".format(
-    moon_sign=random.choice(['Овна', 'Тельца', 'Близнецов', 'Рака', 'Льва', 'Девы', 'Весов', 'Скорпиона', 'Стрельца', 'Козерога', 'Водолея', 'Рыб']),
-    lucky_time=random.choice(['утро 9-11', 'день 14-16', 'вечер 19-21']),
-    stone=random.choice(['аметист', 'горный хрусталь', 'розовый кварц', 'лазурит', 'тигровый глаз', 'цитрин']),
-    color=random.choice(['золотой', 'изумрудный', 'сапфировый', 'рубиновый', 'лавандовый']),
-    weekly_forecast=random.choice([
-        'Неделя принесет важные переговоры и новые возможности для роста.',
-        'Финансовая сфера будет особенно благоприятной в середине недели.',
-        'Отличное время для творческих проектов и самовыражения.'
-    ])
-)
+        moon=random.choice(['Овна', 'Тельца', 'Близнецов', 'Рака', 'Льва', 'Девы', 'Весов', 'Скорпиона', 'Стрельца', 'Козерога', 'Водолея', 'Рыб']),
+        time=random.choice(['утро 9-11', 'день 14-16', 'вечер 19-21']),
+        stone=random.choice(['аметист', 'горный хрусталь', 'розовый кварц', 'лазурит', 'тигровый глаз', 'цитрин']),
+        color=random.choice(['золотой', 'изумрудный', 'сапфировый', 'рубиновый', 'лавандовый']),
+        weekly=random.choice([
+            'Неделя принесет важные переговоры и новые возможности для роста.',
+            'Финансовая сфера будет особенно благоприятной в середине недели.',
+            'Отличное время для творческих проектов и самовыражения.'
+        ])
+    )
+    
+    return base + premium_addition
 
 # ====== HTTP-СЕРВЕР ДЛЯ RENDER (обязательно!) ======
 class HealthCheckHandler(BaseHTTPRequestHandler):
@@ -468,19 +466,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         db.add_user(user_id, user.username, user.first_name)
         is_premium = db.is_premium(user_id)
-        welcome_text = f"""✨ *Добро пожаловать, {user.first_name}!* 🔮
-
-Я твой личный астрологический помощник!
-
-{'✅ **ВАШ ПРЕМИУМ АКТИВЕН!**' if is_premium else '✨ *Попробуй все возможности бота!*'}
-
-*Доступные услуги:*
-• 🔮 Уникальные гороскопы (разные каждый день!)
-• 🔢 Нумерология по дате рождения
-• 🃏 Гадание на Таро
-• 💎 Премиум подписка
-
-Выбери услугу из меню ниже 👇"""
+        
+        if is_premium:
+            premium_status = "✅ **ВАШ ПРЕМИУМ АКТИВЕН!**"
+        else:
+            premium_status = "✨ *Попробуй все возможности бота!*"
+        
+        welcome_text = (
+            "✨ *Добро пожаловать, " + user.first_name + "!* 🔮\n\n"
+            "Я твой личный астрологический помощник!\n\n"
+            + premium_status + "\n\n"
+            "*Доступные услуги:*\n"
+            "• 🔮 Уникальные гороскопы (разные каждый день!)\n"
+            "• 🔢 Нумерология по дате рождения\n"
+            "• 🃏 Гадание на Таро\n"
+            "• 💎 Премиум подписка\n\n"
+            "Выбери услугу из меню ниже 👇"
+        )
         await update.message.reply_text(welcome_text, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
     except Exception as e:
         logger.error(f"❌ Ошибка в команде /start: {e}")
@@ -501,7 +503,8 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         is_premium = db.is_premium(user_id)
         if text == "🔮 Гороскоп":
-            await update.message.reply_text(f"🔮 *Гороскоп на {get_current_date_string()}*\n\nВыбери свой знак зодиака:", reply_markup=get_zodiac_keyboard(), parse_mode='Markdown')
+            date_str = get_current_date_string()
+            await update.message.reply_text("🔮 *Гороскоп на " + date_str + "*\n\nВыбери свой знак зодиака:", reply_markup=get_zodiac_keyboard(), parse_mode='Markdown')
         elif text == "🔢 Нумерология":
             await update.message.reply_text("🔢 *Нумерологический анализ*\n\nВведи дату рождения в формате:\n`ДД.ММ.ГГГГ`\n\n*Например:* `23.09.1992`", parse_mode='Markdown')
         elif text == "🃏 Таро":
@@ -510,58 +513,64 @@ async def handle_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await update.message.reply_text("🃏 *Гадание на Таро*\n\n❌ *Требуется премиум подписка!*\n\nОформи премиум для доступа к Таро! 💎", reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
         elif text == "💎 Премиум" or text == "⭐ Премиум активен":
-            await update.message.reply_text(f"""💎 *ПРЕМИУМ ПОДПИСКА*
-
-{'✅ **ВАШ ПРЕМИУМ АКТИВЕН!**' if is_premium else '❌ **ПРЕМИУМ НЕ АКТИВЕН**'}
-
-*Полный доступ ко всем функциям:*
-
-✨ **РАСШИРЕННЫЕ ГОРОСКОПЫ**
-• Детальный астрологический анализ
-• Недельные прогнозы
-• Персональные рекомендации
-
-🃏 **ГАДАНИЕ НА ТАРО**
-• Карта дня с изображением
-• Расклад на 3 карты
-• Все карты с картинками
-
-🔢 **ПРОФЕССИОНАЛЬНАЯ НУМЕРОЛОГИЯ**
-• Полный анализ чисел
-• Кармические задачи
-• Рекомендации по развитию
-
-Выбери тариф:"", reply_markup=get_premium_keyboard(), parse_mode='Markdown')
+            if is_premium:
+                premium_status = "✅ **ВАШ ПРЕМИУМ АКТИВЕН!**"
+            else:
+                premium_status = "❌ **ПРЕМИУМ НЕ АКТИВЕН**"
+            
+            premium_text = (
+                "💎 *ПРЕМИУМ ПОДПИСКА*\n\n"
+                + premium_status + "\n\n"
+                "*Полный доступ ко всем функциям:*\n\n"
+                "✨ **РАСШИРЕННЫЕ ГОРОСКОПЫ**\n"
+                "• Детальный астрологический анализ\n"
+                "• Недельные прогнозы\n"
+                "• Персональные рекомендации\n\n"
+                "🃏 **ГАДАНИЕ НА ТАРО**\n"
+                "• Карта дня с изображением\n"
+                "• Расклад на 3 карты\n"
+                "• Все карты с картинками\n\n"
+                "🔢 **ПРОФЕССИОНАЛЬНАЯ НУМЕРОЛОГИЯ**\n"
+                "• Полный анализ чисел\n"
+                "• Кармические задачи\n"
+                "• Рекомендации по развитию\n\n"
+                "Выбери тариф:"
+            )
+            await update.message.reply_text(premium_text, reply_markup=get_premium_keyboard(), parse_mode='Markdown')
         elif text == "📊 Статистика":
             user_info = db.get_user(user_id)
             if user_info:
-                stats_text = f"""📊 *ЛИЧНАЯ СТАТИСТИКА*
-
-👤 *Пользователь:* {user_info.get('first_name', 'Гость')}
-📅 *Регистрация:* {user_info.get('joined', 'Неизвестно')}
-💎 *Премиум:* {'✅ Активен' if is_premium else '❌ Не активен'}
-
-*📈 ИСПОЛЬЗОВАНО УСЛУГ:*
-🔮 Гороскопы: {user_info.get('horoscope_count', 0)}
-🔢 Нумерология: {user_info.get('num_count', 0)}
-🃏 Таро: {user_info.get('tarot_count', 0)}"""
+                if is_premium:
+                    premium_badge = "✅ Активен"
+                else:
+                    premium_badge = "❌ Не активен"
+                
+                stats_text = (
+                    "📊 *ЛИЧНАЯ СТАТИСТИКА*\n\n"
+                    "👤 *Пользователь:* " + user_info.get('first_name', 'Гость') + "\n"
+                    "📅 *Регистрация:* " + user_info.get('joined', 'Неизвестно') + "\n"
+                    "💎 *Премиум:* " + premium_badge + "\n\n"
+                    "*📈 ИСПОЛЬЗОВАНО УСЛУГ:*\n"
+                    "🔮 Гороскопы: " + str(user_info.get('horoscope_count', 0)) + "\n"
+                    "🔢 Нумерология: " + str(user_info.get('num_count', 0)) + "\n"
+                    "🃏 Таро: " + str(user_info.get('tarot_count', 0))
+                )
             else:
                 stats_text = "📊 *Вы ещё не использовали услуги бота.*"
             await update.message.reply_text(stats_text, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
         elif text == "ℹ️ Помощь":
-            help_text = """ℹ️ *ПОМОЩЬ И ИНФОРМАЦИЯ*
-
-*Команды бота:*
-/start - Главное меню
-/help - Эта справка
-
-*Доступные услуги:*
-• 🔮 Ежедневные гороскопы
-• 🔢 Нумерология
-• 🃏 Гадание на Таро (премиум)
-• 💎 Премиум подписка
-
-*💫 Все предсказания носят развлекательный характер*"""
+            help_text = (
+                "ℹ️ *ПОМОЩЬ И ИНФОРМАЦИЯ*\n\n"
+                "*Команды бота:*\n"
+                "/start - Главное меню\n"
+                "/help - Эта справка\n\n"
+                "*Доступные услуги:*\n"
+                "• 🔮 Ежедневные гороскопы\n"
+                "• 🔢 Нумерология\n"
+                "• 🃏 Гадание на Таро (премиум)\n"
+                "• 💎 Премиум подписка\n\n"
+                "*💫 Все предсказания носят развлекательный характер*"
+            )
             await update.message.reply_text(help_text, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
         elif text == "🔙 Назад в меню":
             await update.message.reply_text("🔙 Возвращаемся в главное меню:", reply_markup=get_main_keyboard(user_id))
@@ -589,20 +598,20 @@ async def handle_zodiac_selection(update: Update, context: ContextTypes.DEFAULT_
         try:
             is_premium = db.is_premium(user_id)
             db.update_counter(user_id, 'horoscope_count')
-            await update.message.reply_text(f"🔮 *Генерирую гороскоп для {zodiac_sign}...* ✨", parse_mode='Markdown')
+            await update.message.reply_text("🔮 *Генерирую гороскоп для " + zodiac_sign + "...* ✨", parse_mode='Markdown')
             if is_premium:
                 horoscope = generate_premium_horoscope(zodiac_sign, user_id)
             else:
                 horoscope = generate_basic_horoscope(zodiac_sign, user_id)
             try:
-                await update.message.reply_photo(photo=ZODIAC_IMAGES[zodiac_sign], caption=f"✨ {zodiac_sign} ✨")
+                await update.message.reply_photo(photo=ZODIAC_IMAGES[zodiac_sign], caption="✨ " + zodiac_sign + " ✨")
                 await asyncio.sleep(1)
             except Exception as e:
                 logger.warning(f"Не удалось отправить изображение: {e}")
             await update.message.reply_text(horoscope, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
         except Exception as e:
             logger.error(f"Ошибка генерации гороскопа: {e}")
-            await update.message.reply_text(f"✨ *Гороскоп для {zodiac_sign}* ✨\n\nСегодня звезды благоприятствуют вам!", reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
+            await update.message.reply_text("✨ *Гороскоп для " + zodiac_sign + "* ✨\n\nСегодня звезды благоприятствуют вам!", reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
     else:
         await update.message.reply_text("🔮 Выбери знак зодиака из меню!", reply_markup=get_zodiac_keyboard())
 
@@ -626,6 +635,7 @@ async def handle_numerology_input(update: Update, context: ContextTypes.DEFAULT_
         life_path = sum(int(d) for d in str(day + month + year))
         while life_path > 9:
             life_path = sum(int(d) for d in str(life_path))
+        
         personalities = [
             "**ЛИДЕР И НОВАТОР** 💪\nВы рождены, чтобы вести за собой.",
             "**ДИПЛОМАТ И МИРОТВОРЕЦ** 🤝\nВаш дар - находить гармонию.",
@@ -638,15 +648,15 @@ async def handle_numerology_input(update: Update, context: ContextTypes.DEFAULT_
             "Используйте свои сильные стороны для достижения целей.",
             "Работайте над своими слабостями, превращая их в возможности."
         ]
-        numerology_result = f"""🔢 *НУМЕРОЛОГИЧЕСКИЙ ПОРТРЕТ*
-
-*Дата рождения:* {text}
-*Число жизненного пути:* {life_path}
-
-{random.choice(personalities)}
-
-*💫 Совет:*
-{random.choice(advice_options)}"""
+        
+        numerology_result = (
+            "🔢 *НУМЕРОЛОГИЧЕСКИЙ ПОРТРЕТ*\n\n"
+            "*Дата рождения:* " + text + "\n"
+            "*Число жизненного пути:* " + str(life_path) + "\n\n"
+            + random.choice(personalities) + "\n\n"
+            "*💫 Совет:*\n"
+            + random.choice(advice_options)
+        )
         await update.message.reply_text(numerology_result, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
     except ValueError:
         await update.message.reply_text("❌ *Неверный формат даты!*\n\nИспользуй: `ДД.ММ.ГГГГ`\n*Пример:* `23.09.1992`", parse_mode='Markdown')
@@ -684,27 +694,28 @@ async def handle_tarot_daily(update: Update, context: ContextTypes.DEFAULT_TYPE,
     card_image = TAROT_IMAGES[card_name]
     is_reversed = random.choice([True, False])
     try:
-        await query.message.reply_photo(photo=card_image, caption=f"🃏 *{card_name}* ({'перевернутая' if is_reversed else 'прямая'})")
+        caption = "🃏 *" + card_name + "* (" + ("перевернутая" if is_reversed else "прямая") + ")"
+        await query.message.reply_photo(photo=card_image, caption=caption)
     except Exception as img_error:
         logger.warning(f"⚠️ Не удалось отправить изображение карты: {img_error}")
-    tarot_text = f"""🃏 *КАРТА ДНЯ*
-
-*Выпала карта:*
-**{card_name}** ({'перевернутая' if is_reversed else 'прямая'})
-
-*📖 Значение:*
-{random.choice([
-    "Эта карта указывает на важность вашего внутреннего голоса.",
-    "Сегодняшний день несет ключевое сообщение для вашего развития.",
-    "Карта предлагает обратить внимание на определенную сферу жизни."
-])}
-
-*🎯 Совет карты:*
-{random.choice([
-    "Доверьтесь вселенной и следуйте за своим любопытством.",
-    "Используйте все доступные вам ресурсы для достижения целей.",
-    "Прислушивайтесь к своему внутреннему голосу и подсознанию."
-])}"""
+    
+    tarot_text = (
+        "🃏 *КАРТА ДНЯ*\n\n"
+        "*Выпала карта:*\n"
+        "**" + card_name + "** (" + ("перевернутая" if is_reversed else "прямая") + ")\n\n"
+        "*📖 Значение:*\n"
+        + random.choice([
+            "Эта карта указывает на важность вашего внутреннего голоса.",
+            "Сегодняшний день несет ключевое сообщение для вашего развития.",
+            "Карта предлагает обратить внимание на определенную сферу жизни."
+        ]) + "\n\n"
+        "*🎯 Совет карты:*\n"
+        + random.choice([
+            "Доверьтесь вселенной и следуйте за своим любопытством.",
+            "Используйте все доступные вам ресурсы для достижения целей.",
+            "Прислушивайтесь к своему внутреннему голосу и подсознанию."
+        ])
+    )
     await query.message.reply_text(tarot_text, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
 
 async def handle_tarot_three(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
@@ -712,32 +723,32 @@ async def handle_tarot_three(update: Update, context: ContextTypes.DEFAULT_TYPE,
     cards = random.sample(list(TAROT_IMAGES.items()), 3)
     for card_name, card_image in cards:
         try:
-            await query.message.reply_photo(photo=card_image, caption=f"🃏 *{card_name}*")
+            await query.message.reply_photo(photo=card_image, caption="🃏 *" + card_name + "*")
             await asyncio.sleep(0.5)
         except Exception as img_error:
             logger.warning(f"⚠️ Не удалось отправить изображение: {img_error}")
-    tarot_text = f"""🃏 *РАСКЛАД НА 3 КАРТЫ*
-
-*Прошлое (влияние на текущую ситуацию):*
-**{cards[0][0]}**
-{random.choice([
-    "Ваш прошлый опыт подготовил вас к текущей ситуации.",
-    "Прошлые события продолжают влиять на вашу жизнь."
-])}
-
-*Настоящее (текущая ситуация):*
-**{cards[1][0]}**
-{random.choice([
-    "Текущая ситуация требует вашего внимания и осознанности.",
-    "Карта указывает на ключевые энергии, действующие в вашей жизни сейчас."
-])}
-
-*Будущее (возможное развитие):*
-**{cards[2][0]}**
-{random.choice([
-    "Будущее развитие зависит от ваших текущих решений.",
-    "Карта показывает потенциальный результат ваших действий."
-])}"""
+    
+    tarot_text = (
+        "🃏 *РАСКЛАД НА 3 КАРТЫ*\n\n"
+        "*Прошлое (влияние на текущую ситуацию):*\n"
+        "**" + cards[0][0] + "**\n"
+        + random.choice([
+            "Ваш прошлый опыт подготовил вас к текущей ситуации.",
+            "Прошлые события продолжают влиять на вашу жизнь."
+        ]) + "\n\n"
+        "*Настоящее (текущая ситуация):*\n"
+        "**" + cards[1][0] + "**\n"
+        + random.choice([
+            "Текущая ситуация требует вашего внимания и осознанности.",
+            "Карта указывает на ключевые энергии, действующие в вашей жизни сейчас."
+        ]) + "\n\n"
+        "*Будущее (возможное развитие):*\n"
+        "**" + cards[2][0] + "**\n"
+        + random.choice([
+            "Будущее развитие зависит от ваших текущих решений.",
+            "Карта показывает потенциальный результат ваших действий."
+        ])
+    )
     await query.message.reply_text(tarot_text, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
 
 async def handle_premium_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -761,12 +772,12 @@ async def handle_premium_callback(update: Update, context: ContextTypes.DEFAULT_
             return
         payment_id = str(uuid.uuid4())
         db.save_payment(payment_id, user_id, tariff['days'], tariff['price']/100)
-        payload = f"{user_id}_{tariff['days']}_{payment_id}"
-        prices = [LabeledPrice(label=f"Премиум на {tariff['days']} дней", amount=tariff['price'])]
+        payload = str(user_id) + "_" + str(tariff['days']) + "_" + payment_id
+        prices = [LabeledPrice(label="Премиум на " + str(tariff['days']) + " дней", amount=tariff['price'])]
         await context.bot.send_invoice(
             chat_id=query.message.chat_id,
-            title=f"💎 Премиум подписка на {tariff['days']} дней",
-            description=f"Полный доступ ко всем функциям бота на {tariff['days']} дней",
+            title="💎 Премиум подписка на " + str(tariff['days']) + " дней",
+            description="Полный доступ ко всем функциям бота на " + str(tariff['days']) + " дней",
             payload=payload,
             provider_token=PAYMENT_PROVIDER_TOKEN,
             currency="RUB",
@@ -801,14 +812,14 @@ async def successful_payment_handler(update: Update, context: ContextTypes.DEFAU
                 tariff_days = int(payload_parts[1])
                 db.update_payment_status(payment_id, 'succeeded')
                 premium_until = db.add_premium(user_id, tariff_days)
-                success_text = f"""💎 *ПОЗДРАВЛЯЕМ! ПРЕМИУМ АКТИВИРОВАН!* 🎉
-
-✅ *Оплата прошла успешно!*
-💰 *Сумма:* {payment.total_amount / 100}₽
-📅 *Тариф:* {tariff_days} дней
-📅 *Премиум активен до:* {premium_until.split()[0]}
-
-Теперь тебе доступны ВСЕ функции бота! ✨"""
+                success_text = (
+                    "💎 *ПОЗДРАВЛЯЕМ! ПРЕМИУМ АКТИВИРОВАН!* 🎉\n\n"
+                    "✅ *Оплата прошла успешно!*\n"
+                    "💰 *Сумма:* " + str(payment.total_amount / 100) + "₽\n"
+                    "📅 *Тариф:* " + str(tariff_days) + " дней\n"
+                    "📅 *Премиум активен до:* " + premium_until.split()[0] + "\n\n"
+                    "Теперь тебе доступны ВСЕ функции бота! ✨"
+                )
                 await update.message.reply_text(success_text, reply_markup=get_main_keyboard(user_id), parse_mode='Markdown')
                 logger.info(f"✅ Премиум активирован: пользователь {user_id}, {tariff_days} дней")
                 return
@@ -840,22 +851,26 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     stats = db.get_all_users_stats()
     
-    admin_text = f"""🛠️ *АДМИН-ПАНЕЛЬ*
-
-*Статистика:*
-👥 Пользователей: {stats['total_users']}
-💎 Премиум: {stats['premium_users']}
-💰 Платежей: {stats['total_payments']}
-✅ Успешных: {stats['successful_payments']}
-
-*Технические работы:*
-{'🔴 ВКЛЮЧЕНЫ' if TECHNICAL_WORKS else '🟢 ВЫКЛЮЧЕНЫ'}
-
-*Команды:*
-/send <текст> - рассылка всем
-/tech_on - включить тех. работы  
-/tech_off - выключить тех. работы
-/stats - обновить статистику"""
+    if TECHNICAL_WORKS:
+        tech_status = "🔴 ВКЛЮЧЕНЫ"
+    else:
+        tech_status = "🟢 ВЫКЛЮЧЕНЫ"
+    
+    admin_text = (
+        "🛠️ *АДМИН-ПАНЕЛЬ*\n\n"
+        "*Статистика:*\n"
+        "👥 Пользователей: " + str(stats['total_users']) + "\n"
+        "💎 Премиум: " + str(stats['premium_users']) + "\n"
+        "💰 Платежей: " + str(stats['total_payments']) + "\n"
+        "✅ Успешных: " + str(stats['successful_payments']) + "\n\n"
+        "*Технические работы:*\n"
+        + tech_status + "\n\n"
+        "*Команды:*\n"
+        "/send <текст> - рассылка всем\n"
+        "/tech_on - включить тех. работы\n"
+        "/tech_off - выключить тех. работы\n"
+        "/stats - обновить статистику"
+    )
 
     keyboard = [
         [InlineKeyboardButton("📤 Рассылка", callback_data="admin_broadcast")],
@@ -895,12 +910,13 @@ async def handle_admin_callback(update: Update, context: ContextTypes.DEFAULT_TY
         
     elif query.data == "admin_stats":
         stats = db.get_all_users_stats()
-        stats_text = f"""📊 *ОБНОВЛЁННАЯ СТАТИСТИКА*
-
-👥 Пользователей: {stats['total_users']}
-💎 Премиум: {stats['premium_users']}
-💰 Платежей: {stats['total_payments']}
-✅ Успешных: {stats['successful_payments']}"""
+        stats_text = (
+            "📊 *ОБНОВЛЁННАЯ СТАТИСТИКА*\n\n"
+            "👥 Пользователей: " + str(stats['total_users']) + "\n"
+            "💎 Премиум: " + str(stats['premium_users']) + "\n"
+            "💰 Платежей: " + str(stats['total_payments']) + "\n"
+            "✅ Успешных: " + str(stats['successful_payments'])
+        )
         await query.message.reply_text(stats_text, parse_mode='Markdown')
         
     elif query.data == "admin_premium":
@@ -926,10 +942,11 @@ async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TY
                 user_id = int(parts[1])
                 days = int(parts[2])
                 premium_until = db.add_premium(user_id, days)
-                await update.message.reply_text(
-                    f"✅ Премиум добавлен пользователю {user_id} на {days} дней\n"
-                    f"До: {premium_until}"
+                response = (
+                    "✅ Премиум добавлен пользователю " + str(user_id) + " на " + str(days) + " дней\n"
+                    "До: " + premium_until
                 )
+                await update.message.reply_text(response)
             except ValueError:
                 await update.message.reply_text("❌ Неверный формат. Используйте: `/premium_add <user_id> <days>`")
         else:
@@ -941,9 +958,9 @@ async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TY
             try:
                 user_id = int(parts[1])
                 if db.remove_premium(user_id):
-                    await update.message.reply_text(f"✅ Премиум удалён у пользователя {user_id}")
+                    await update.message.reply_text("✅ Премиум удалён у пользователя " + str(user_id))
                 else:
-                    await update.message.reply_text(f"❌ У пользователя {user_id} нет премиума")
+                    await update.message.reply_text("❌ У пользователя " + str(user_id) + " нет премиума")
             except ValueError:
                 await update.message.reply_text("❌ Неверный формат. Используйте: `/premium_remove <user_id>`")
         else:
@@ -952,8 +969,9 @@ async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TY
     elif text == '/premium_list':
         premium_users = list(db.data.get('premium', {}).keys())
         if premium_users:
-            users_list = "\n".join([f"• {uid}" for uid in premium_users[:20]])
-            await update.message.reply_text(f"👑 *ПРЕМИУМ ПОЛЬЗОВАТЕЛИ* ({len(premium_users)}):\n\n{users_list}", parse_mode='Markdown')
+            users_list = "\n".join(["• " + uid for uid in premium_users[:20]])
+            response = "👑 *ПРЕМИУМ ПОЛЬЗОВАТЕЛИ* (" + str(len(premium_users)) + "):\n\n" + users_list
+            await update.message.reply_text(response, parse_mode='Markdown')
         else:
             await update.message.reply_text("👑 Нет премиум пользователей")
             
@@ -962,17 +980,17 @@ async def handle_admin_commands(update: Update, context: ContextTypes.DEFAULT_TY
         if broadcast_text:
             users = list(db.data['users'].keys())
             success_count = 0
-            for user_id in users:
+            for uid in users:
                 try:
                     await context.bot.send_message(
-                        chat_id=int(user_id),
-                        text=f"📢 *РАССЫЛКА*\n\n{broadcast_text}",
+                        chat_id=int(uid),
+                        text="📢 *РАССЫЛКА*\n\n" + broadcast_text,
                         parse_mode='Markdown'
                     )
                     success_count += 1
                 except Exception as e:
-                    logger.warning(f"Не удалось отправить рассылку {user_id}: {e}")
-            await update.message.reply_text(f"✅ Рассылка отправлена {success_count} из {len(users)} пользователей")
+                    logger.warning(f"Не удалось отправить рассылку {uid}: {e}")
+            await update.message.reply_text("✅ Рассылка отправлена " + str(success_count) + " из " + str(len(users)) + " пользователей")
         else:
             await update.message.reply_text("❌ Пустой текст рассылки")
 
@@ -987,19 +1005,19 @@ async def handle_broadcast_text(update: Update, context: ContextTypes.DEFAULT_TY
         users = list(db.data['users'].keys())
         success_count = 0
         
-        for user_id in users:
+        for uid in users:
             try:
                 await context.bot.send_message(
-                    chat_id=int(user_id),
-                    text=f"📢 *РАССЫЛКА*\n\n{broadcast_text}",
+                    chat_id=int(uid),
+                    text="📢 *РАССЫЛКА*\n\n" + broadcast_text,
                     parse_mode='Markdown'
                 )
                 success_count += 1
             except Exception as e:
-                logger.warning(f"Не удалось отправить рассылку {user_id}: {e}")
+                logger.warning(f"Не удалось отправить рассылку {uid}: {e}")
         
         await update.message.reply_text(
-            f"✅ Рассылка отправлена {success_count} из {len(users)} пользователей"
+            "✅ Рассылка отправлена " + str(success_count) + " из " + str(len(users)) + " пользователей"
         )
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1016,9 +1034,14 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ====== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (клавиатуры) ======
 def get_main_keyboard(user_id=None):
     is_premium = db.is_premium(user_id) if user_id else False
+    if is_premium:
+        premium_btn = "⭐ Премиум активен"
+    else:
+        premium_btn = "💎 Премиум"
+    
     keyboard = [
         ["🔮 Гороскоп", "🔢 Нумерология"],
-        ["🃏 Таро", "⭐ Премиум активен" if is_premium else "💎 Премиум"],
+        ["🃏 Таро", premium_btn],
         ["📊 Статистика", "ℹ️ Помощь"]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
@@ -1057,9 +1080,9 @@ def main():
     print("=" * 70)
     
     stats = db.get_all_users_stats()
-    print(f"📊 Пользователей: {stats['total_users']}")
-    print(f"💎 Премиум: {stats['premium_users']}")
-    print(f"💰 Платежей: {stats['total_payments']}")
+    print("📊 Пользователей: " + str(stats['total_users']))
+    print("💎 Премиум: " + str(stats['premium_users']))
+    print("💰 Платежей: " + str(stats['total_payments']))
     print("=" * 70)
     
     try:
